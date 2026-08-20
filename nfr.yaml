@@ -1,0 +1,146 @@
+apiVersion: v1
+kind: NonFunctionalRequirements
+metadata:
+  name: yas-product
+  description: "Requisitos não-funcionais do product-service (YAS) — piloto de código externo"
+  version: "1.0.0"
+  owner: "tcc"
+
+performance:
+  scenarios:
+    smoke:
+      description: "Validação rápida pós-deploy"
+      executor: "constant-vus"
+      duration: "1m"
+      vus: 1
+      thresholds:
+        http_req_failed:
+          rate: 0.05
+        http_req_duration:
+          p95: 1000
+        gate: warning
+
+    baseline:
+      description: "Carga com ramping VUs até 25 para validar SLAs críticos"
+      executor: "ramping-vus"
+      duration: "5m"
+      stages:
+        - target: 25
+          duration: "1m"
+        - target: 25
+          duration: "3m"
+        - target: 0
+          duration: "1m"
+      thresholds:
+        http_req_failed:
+          rate: 0.01
+        http_req_duration:
+          p95: 300
+          p99: 800
+        http_reqs:
+          rate: 10
+        business_errors:
+          rate: 0.05
+        gate: critical
+
+    stress:
+      description: "Rampa progressiva para encontrar ponto de quebra"
+      executor: "ramping-vus"
+      duration: "10m"
+      stages:
+        - target: 50
+          duration: "2m"
+        - target: 100
+          duration: "3m"
+        - target: 150
+          duration: "3m"
+        - target: 0
+          duration: "2m"
+      thresholds:
+        http_req_failed:
+          rate: 0.05
+        http_req_duration:
+          p99: 2000
+        gate: warning
+
+    spike:
+      description: "Pico repentino de tráfego"
+      executor: "ramping-vus"
+      duration: "5m"
+      stages:
+        - target: 25
+          duration: "1m"
+        - target: 200
+          duration: "30s"
+        - target: 250
+          duration: "2m"
+        - target: 0
+          duration: "1m30s"
+      thresholds:
+        http_req_failed:
+          rate: 0.10
+        http_req_duration:
+          p99: 3000
+        gate: warning
+
+resilience:
+  chaos_experiments:
+    - name: yas-product-pod-kill
+      type: PodChaos
+      duration: "60s"
+      description: "Matar um pod aleatório e verificar recovery"
+      recovery_threshold: "30s"
+
+    - name: yas-product-network-delay
+      type: NetworkChaos
+      duration: "120s"
+      description: "Injetar latência de rede de 100ms"
+      delay: "100ms"
+      recovery_threshold: "10s"
+
+    - name: yas-product-pod-cpu-stress
+      type: StressChaos
+      duration: "60s"
+      description: "Estressar CPU de um pod"
+      recovery_threshold: "30s"
+
+  sla:
+    availability: 99.5
+    error_budget: 0.5
+    recovery_time_target: 30
+
+observability:
+  tracing:
+    enabled: true
+    sampler_ratio: 1.0
+  metrics:
+    enabled: true
+    endpoint: "/metrics"
+  logging:
+    level: "INFO"
+    format: "json"
+    structured: true
+
+resources:
+  sizing: medium
+  defaults:
+    requests:
+      cpu: "50m"
+      memory: "128Mi"
+    limits:
+      cpu: "500m"
+      memory: "1Gi"
+
+  sizing_guide:
+    small:
+      replicas: 1
+      requests: { cpu: "50m", memory: "128Mi" }
+      limits: { cpu: "200m", memory: "256Mi" }
+    medium:
+      replicas: 2
+      requests: { cpu: "200m", memory: "256Mi" }
+      limits: { cpu: "500m", memory: "1Gi" }
+    large:
+      replicas: 3
+      requests: { cpu: "500m", memory: "512Mi" }
+      limits: { cpu: "1000m", memory: "1024Mi" }
