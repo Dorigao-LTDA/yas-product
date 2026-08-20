@@ -3,7 +3,7 @@ kind: NonFunctionalRequirements
 metadata:
   name: yas-product
   description: "Requisitos não-funcionais do product-service (YAS) — piloto de código externo"
-  version: "1.0.0"
+  version: "1.1.0"
   owner: "tcc"
 
 performance:
@@ -44,15 +44,15 @@ performance:
         gate: critical
 
     stress:
-      description: "Rampa progressiva para encontrar ponto de quebra"
+      description: "Rampa agressiva até 600 VUs para encontrar o ponto de quebra"
       executor: "ramping-vus"
       duration: "10m"
       stages:
-        - target: 50
+        - target: 200
           duration: "2m"
-        - target: 100
+        - target: 400
           duration: "3m"
-        - target: 150
+        - target: 600
           duration: "3m"
         - target: 0
           duration: "2m"
@@ -64,15 +64,15 @@ performance:
         gate: warning
 
     spike:
-      description: "Pico repentino de tráfego"
+      description: "Pico repentino de tráfego até 1000 VUs"
       executor: "ramping-vus"
       duration: "5m"
       stages:
-        - target: 25
+        - target: 100
           duration: "1m"
-        - target: 200
+        - target: 1000
           duration: "30s"
-        - target: 250
+        - target: 1000
           duration: "2m"
         - target: 0
           duration: "1m30s"
@@ -94,7 +94,7 @@ resilience:
     - name: yas-product-network-delay
       type: NetworkChaos
       duration: "120s"
-      description: "Injetar latência de rede de 100ms"
+      description: "Injetar latência de rede de 100ms no próprio serviço"
       delay: "100ms"
       recovery_threshold: "10s"
 
@@ -103,6 +103,25 @@ resilience:
       duration: "60s"
       description: "Estressar CPU de um pod"
       recovery_threshold: "30s"
+
+    # ---------------------------------------------------------------
+    # Degradação de dependência — ataca o mock media (dependência real)
+    # ---------------------------------------------------------------
+    - name: yas-product-media-down
+      type: PodChaos
+      mode: all
+      target: yas-media-mock
+      duration: "60s"
+      description: "Derrubar TODAS as réplicas do media-mock (dependência fora)"
+      recovery_threshold: "30s"
+
+    - name: yas-product-media-delay
+      type: NetworkChaos
+      target: yas-media-mock
+      duration: "120s"
+      description: "Latência de 1s na dependência media (RestClient sem timeout)"
+      delay: "1s"
+      recovery_threshold: "10s"
 
   sla:
     availability: 99.5

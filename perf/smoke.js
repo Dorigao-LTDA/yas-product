@@ -24,7 +24,7 @@ export default function () {
   const health = http.get(`${BASE_URL}/actuator/health`);
   check(health, { 'health 200': (r) => r.status === 200 });
 
-  const products = http.get(`${BASE_URL}/storefront/products?page=0&size=10`);
+  const products = http.get(`${BASE_URL}/storefront/products?pageNo=0&pageSize=10`);
   check(products, { 'products 200': (r) => r.status === 200 });
 
   const brands = http.get(`${BASE_URL}/storefront/brands`);

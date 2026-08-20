@@ -45,7 +45,7 @@ export default function () {
   // Leitura (85%): list products, brands, categories, health
   const r = Math.random();
   if (r < 0.5) {
-    const products = http.get(`${BASE_URL}/storefront/products?page=0&size=10`, { tags: { operation: 'list-products' } });
+    const products = http.get(`${BASE_URL}/storefront/products?pageNo=0&pageSize=10`, { tags: { operation: 'list-products' } });
     check(products, { 'list products 200': (x) => x.status === 200 }) || errors.add(1);
   } else if (r < 0.7) {
     const brands = http.get(`${BASE_URL}/storefront/brands`, { tags: { operation: 'list-brands' } });
