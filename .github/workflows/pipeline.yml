@@ -22,6 +22,7 @@ jobs:
     uses: Dorigao-LTDA/ct-common/.github/workflows/pipeline-reusable.yml@main
     with:
       service_name: yas-product
+      health_path: /product/actuator/health
       run_stress_spike_tests: ${{ inputs.run_stress_spike_tests || false }}
       run_chaos_tests: ${{ inputs.run_chaos_tests || false }}
     secrets: inherit
