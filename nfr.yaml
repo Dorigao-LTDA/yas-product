@@ -96,6 +96,8 @@ resilience:
       duration: "120s"
       description: "Injetar latência de rede de 100ms no próprio serviço"
       delay: "100ms"
+      correlation: "1.0"
+      jitter: "0ms"
       recovery_threshold: "10s"
 
     - name: yas-product-pod-cpu-stress
@@ -121,6 +123,8 @@ resilience:
       duration: "120s"
       description: "Latência de 1s na dependência media (RestClient sem timeout)"
       delay: "1s"
+      correlation: "1.0"
+      jitter: "0ms"
       recovery_threshold: "10s"
 
   sla:
