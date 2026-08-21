@@ -110,11 +110,12 @@ resilience:
     # Degradação de dependência — ataca o mock media (dependência real)
     # ---------------------------------------------------------------
     - name: yas-product-media-down
-      type: PodChaos
+      type: NetworkChaos
+      action: partition
       mode: all
       target: yas-media-mock
       duration: "60s"
-      description: "Derrubar TODAS as réplicas do media-mock (dependência fora)"
+      description: "Particionar a rede da dependência media (indisponível por 60s)"
       recovery_threshold: "30s"
 
     - name: yas-product-media-delay
